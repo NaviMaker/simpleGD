@@ -26,11 +26,14 @@ class simpleGD{
 	public $enableCache = false;
 	public $cachedir 	= "";
 	public $deleteOriginal = false;
+	public $printDebug = true;
 	
 	/* The following variables are for internal use only don't edit them! */
 	private $resourceImage;
+	private $tempImage;
 	private $originalWidth;
 	private $originalHeight;
+	private $debugTime;
 	
 	private function loadResource($resource)
 	{
@@ -63,6 +66,7 @@ class simpleGD{
 	
 	public function render()
 	{
+		$this->debug(0);
 		$this->loadResource($this->source);
 		$this->getSourceSize();
 		if(!$this->resizeIfSmaller)
@@ -72,6 +76,10 @@ class simpleGD{
 				return saveResource();
 			}
 		}
+		$this->tempImage = $this->resourceImage;
+		$this->debug(1);
+		$this->saveResource();
+		
 	}
 	
 	private function getSourceSize()
@@ -81,9 +89,49 @@ class simpleGD{
 		$this->originalHeight = $height;
 	}
 	
-	private function saveResource()
+	private function getProportionals()
 	{
 		
+	}
+	
+	private function saveResource()
+	{
+		if($this->format == "jpg")
+		{
+			header('Content-type: image/jpg');
+			imagejpeg($this->tempImage, NULL, $this->quality);
+		}
+		elseif($this->format == "png")
+		{
+			imagepng($this->tempImage);
+		}
+		elseif($this->format == "gif")
+		{
+			imagegif($this->tempImage);
+		}
+		else
+		{
+			throw new Exception ("simpleGD :: Your output format is not supported");
+		}
+	}
+	private function debug($step)
+	{
+		if($step == 0)
+		{
+			$microtime = explode(" ",microtime()); 
+			$this->debugTime = $microtime[1] + $microtime[0];	
+		}
+		elseif($step == 1)
+		{
+			$microtime = explode(" ",microtime()); 
+			$now = $microtime[1] + $microtime[0];
+			$total= $now - $this->debugTime;
+			
+			$back = imagecolorallocatealpha($this->tempImage, 255, 255, 255, 70);
+			$text_color = imagecolorallocate($this->tempImage, 0, 0, 0);
+			imagefilledrectangle($this->tempImage, 0, 0, $this->originalWidth, 35, $back);
+			imagestring($this->tempImage, 5, 10, 10,  'Image generated in '.$total.' sec', $text_color);
+		}
 	}
 }
 ?>
