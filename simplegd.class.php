@@ -66,7 +66,7 @@ class simpleGD{
 	
 	public function render()
 	{
-		$this->debug(0);
+		if($this->printDebug){$this->debug(0);}
 		$this->loadResource($this->source);
 		$this->getSourceSize();
 		if(!$this->resizeIfSmaller)
@@ -77,7 +77,7 @@ class simpleGD{
 			}
 		}
 		$this->tempImage = $this->resourceImage;
-		$this->debug(1);
+		if($this->printDebug){$this->debug(1);}
 		$this->saveResource();
 		
 	}
@@ -118,20 +118,23 @@ class simpleGD{
 	{
 		if($step == 0)
 		{
-			$microtime = explode(" ",microtime()); 
-			$this->debugTime = $microtime[1] + $microtime[0];	
+			$this->debugTime = $this->microtimeGet();	
 		}
 		elseif($step == 1)
 		{
-			$microtime = explode(" ",microtime()); 
-			$now = $microtime[1] + $microtime[0];
-			$total= $now - $this->debugTime;
+			$time = substr($this->microtimeGet() - $this->debugTime, 0, 4);
 			
-			$back = imagecolorallocatealpha($this->tempImage, 255, 255, 255, 70);
-			$text_color = imagecolorallocate($this->tempImage, 0, 0, 0);
-			imagefilledrectangle($this->tempImage, 0, 0, $this->originalWidth, 35, $back);
-			imagestring($this->tempImage, 5, 10, 10,  'Image generated in '.$total.' sec', $text_color);
+			$background = imagecolorallocatealpha($this->tempImage, 255, 255, 255, 70);
+			$text = imagecolorallocate($this->tempImage, 0, 0, 0);
+			imagefilledrectangle($this->tempImage, 0, 0, $this->originalWidth, 35, $background);
+			imagestring($this->tempImage, 5, 10, 10,  'Image processed in '.$time.' sec by simpleGD', $text);
 		}
+	}
+	
+	private function microtimeGet()
+	{
+		$microtime = explode(" ",microtime()); 
+		return($microtime[1] + $microtime[0]);	
 	}
 }
 ?>
