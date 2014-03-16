@@ -14,19 +14,25 @@ class simpleGD{
 	public $source;
 	public $destination;
 	
-	public $width;
-	public $height;
+	public $width 	= 0;
+	public $height 	= 0;
 	public $format 	= "jpg"; 		// jpg, png, gif
-	public $quality = 90; 			// 1-100 only for jpg
+	public $quality = 90; 			// 1(lowest) - 100(best) only for jpg 
 	
-	public $resizeMode = "crop"; 	//crop, warp
-	public $rotate 	   = 0; 		//0, 90, 180, 270
+	public $resizeMode = "scale"; 	// crop, warp, scale
+	public $rotate 	   = 0; 		// 0, 90, 180, 270
 	
-	public $resizeIfSmaller = false;
-	public $enableCache = false;
-	public $cachedir 	= "";
-	public $deleteOriginal = false;
-	public $printDebug = true;
+	public $addWatermark	  = true; 			// 0, 90, 180, 270
+	public $watermarkType	  = "text"; 		// Image, Text
+	public $watermarkFont	  = ""; 			// Font file to use when writing watermark
+	public $watermarkImage 	  = ""; 			// Image file to print over the source image
+	public $watermarkPosition = "right-bottom"; // left-top, left-bottom, right-top, right-bottom, center, random
+	
+	public $resizeIfSmaller = false;			// If a small image is enlarged the final quality will be low
+	public $enableCache 	= false;			// Only use cache if you render the same images frequently!
+	public $cachedir 		= "";				// Cache dir relative to the script folder
+	public $deleteOriginal  = false;			// If true simpleGD will delete the original image file permanently!
+	public $printDebug 		= true;				// Add to every image an overlay showing process time and memory usage
 	
 	/* The following variables are for internal use only don't edit them! */
 	private $resourceImage;
@@ -69,17 +75,30 @@ class simpleGD{
 		if($this->printDebug){$this->debug(0);}
 		$this->loadResource($this->source);
 		$this->getSourceSize();
-		if(!$this->resizeIfSmaller)
+		
+		
+		if($this->resizeMode == "warp")
 		{
-			if( $this->originalWidth < $this->width || $this->originalHeight < $this->height )
-			{
-				return saveResource();
-			}
+			$this->tempImage = imagecreatetruecolor($this->width, $this->height);
+			ImageCopyResampled($this->tempImage, $this->resourceImage, 0, 0, 0, 0, $this->width, $this->height, $this->originalWidth, $this->originalHeight);
+        }
+		elseif($this->resizeMode == "scale")
+		{
+			$this->getProportionals();
+			$this->tempImage = imagecreatetruecolor($this->width, $this->height);
+			ImageCopyResampled($this->tempImage, $this->resourceImage, 0, 0, 0, 0, $this->width, $this->height, $this->originalWidth, $this->originalHeight);
+        }
+		elseif($this->resizeMode == "crop")
+		{
+			
+        }
+		else
+		{
+			throw new Exception ("simpleGD :: Resize mode not supported");
 		}
-		$this->tempImage = $this->resourceImage;
+		
 		if($this->printDebug){$this->debug(1);}
 		$this->saveResource();
-		
 	}
 	
 	private function getSourceSize()
@@ -91,7 +110,14 @@ class simpleGD{
 	
 	private function getProportionals()
 	{
-		
+		if($this->originalWidth > $this->originalHeight)
+		{
+			$this->height = ($this->originalHeight * $this->width )/$this->originalWidth;	
+		}
+		else
+		{		
+			$this->width = ($this->originalWidth * $this->height )/$this->originalHeight;	
+		}
 	}
 	
 	private function saveResource()
@@ -127,7 +153,7 @@ class simpleGD{
 			$background = imagecolorallocatealpha($this->tempImage, 255, 255, 255, 70);
 			$text = imagecolorallocate($this->tempImage, 0, 0, 0);
 			imagefilledrectangle($this->tempImage, 0, 0, $this->originalWidth, 35, $background);
-			imagestring($this->tempImage, 5, 10, 10,  'Image processed in '.$time.' sec by simpleGD', $text);
+			imagestring($this->tempImage, 5, 10, 10,  'Image processed in '.$time.'s using '.substr((memory_get_usage()/1024/1024),0,5).'Mb', $text);
 		}
 	}
 	
