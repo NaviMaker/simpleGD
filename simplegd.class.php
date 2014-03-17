@@ -76,6 +76,18 @@ class simpleGD{
 		$this->loadResource($this->source);
 		$this->getSourceSize();
 		
+		if(!$this->resizeIfSmaller)
+		{
+			if($this->width > $this->originalWidth)
+			{
+				$this->width = $this->originalWidth;
+			}
+			
+			if($this->height > $this->originalHeight)
+			{
+				$this->height = $this->originalHeight;
+			}
+		}
 		
 		if($this->resizeMode == "warp")
 		{
@@ -152,7 +164,7 @@ class simpleGD{
 			
 			$background = imagecolorallocatealpha($this->tempImage, 255, 255, 255, 70);
 			$text = imagecolorallocate($this->tempImage, 0, 0, 0);
-			imagefilledrectangle($this->tempImage, 0, 0, $this->originalWidth, 35, $background);
+			imagefilledrectangle($this->tempImage, 0, 0, $this->width, 35, $background);
 			imagestring($this->tempImage, 5, 10, 10,  'Image processed in '.$time.'s using '.substr((memory_get_usage()/1024/1024),0,5).'Mb', $text);
 		}
 	}
